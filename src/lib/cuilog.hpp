@@ -1,0 +1,78 @@
+/*
+ * Copyright (c) 2018 https://github.com/dscat/cuitool
+ *
+ * Licensed under the MIT License: http://www.opensource.org/licenses/mit-license.php
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+#ifndef DSCAT_CUILOG_HPP
+#define DSCAT_CUILOG_HPP
+
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include "colorstreams.hpp"
+
+namespace cuilog {
+
+    // nullcout
+    class nullstreambuf : public std::streambuf {
+        virtual int overflow(char c) { return traits_type::not_eof(c); }
+    };
+    class nullostream : public std::ostream {
+        nullstreambuf nullostr;
+    public:
+        nullostream() : std::ostream(&nullostr){};
+    };
+    class coutclass : public std::basic_ostream<char> {
+        cuilog::nullostream nullcout;
+    public:
+        using std::ostream::basic_ostream;
+        coutclass() : std::ostream(std::cout.rdbuf()){};
+        void disable() { this->rdbuf(nullcout.rdbuf()); }
+        void enable()  { this->rdbuf(std::cout.rdbuf()); }
+    };
+    coutclass cout;
+
+    // datetime
+    std::string datetime() {
+        time_t t = time(nullptr);
+        const tm* lt = localtime(&t);
+
+        std::stringstream out;
+        out << "20" << std::setw(2) << std::setfill('0') << (lt->tm_year - 100) << "/" \
+            << std::setw(2) << std::setfill('0') << (lt->tm_mon + 1) << "/" \
+            << std::setw(2) << std::setfill('0') << lt->tm_mday << " " \
+            << std::setw(2) << std::setfill('0') << lt->tm_hour << ":" \
+            << std::setw(2) << std::setfill('0') << lt->tm_min << ":" \
+            << std::setw(2) << std::setfill('0') << lt->tm_sec;
+        return "(" + out.str() + ")";
+    }
+
+    // logger
+    template <typename T> inline std::string note(const T __str) { return std::string(datetime()).append(" [ ] ").append(__str); }
+    template <typename T> inline std::string warn(const T __str) { return std::string(datetime()).append(" [!] ").append(ansi::yellow(__str)); }
+    template <typename T> inline std::string crit(const T __str) { return std::string("").append(ansi::bright(ansi::red(datetime().append(" [*] ").append(__str)))); }
+    template <typename T> inline std::string info(const T __str) { return std::string(datetime()).append(ansi::cyan(std::string(" [-] ").append(__str))); }
+
+}
+
+#endif //DSCAT_CUILOG_HPP
