@@ -33,7 +33,7 @@ scatter.data
 
 ### Gathering files
 
-#### Example: From 4 pieces
+#### Example: From 4 pieces to a file
 ```
 $ dscat -g -c 4 -p /tmp/p1,/tmp/p2,/tmp/p3,/tmp/p4 -o /tmp/gather.data
 $
